@@ -345,8 +345,10 @@ begin
   LNFSeNode.AppendChild(AddNode(tcDe2, '#1', 'ValorTotalRecebido', 1, 15, 0,
                                           NFSe.Servico.ValorTotalRecebido, ''));
 
-  LNFSeNode.AppendChild(AddNode(tcStr, '#1', 'RetencaoPisCofins', 1, 1, 0,
-         tpRetPisCofinsToStr(NFSe.Servico.Valores.tribFed.tpRetPisCofins), ''));
+  // O endpoint legado do layout 1.00 rejeita essa tag opcional.
+  if VersaoNFSe = ve200 then
+    LNFSeNode.AppendChild(AddNode(tcStr, '#1', 'RetencaoPisCofins', 1, 1, 0,
+           tpRetPisCofinsToStr(NFSe.Servico.Valores.tribFed.tpRetPisCofins), ''));
 
   if VersaoNFSe = ve200 then
   begin
