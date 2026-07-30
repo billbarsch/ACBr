@@ -368,8 +368,6 @@ uses
 {$R *.lfm}
 {$ENDIF}
 
-{$R ACBrNFSeXLogo.res}
-
 var
   FQuebradeLinha: String;
 
@@ -389,24 +387,7 @@ var
 begin
   inherited;
 
-  TipoLogo := UpperCase(Trim(fpDANFSe.LogoNFSe));
-
-  if (TipoLogo = '') or
-     ((TipoLogo <> 'ACBRNFSEXLOGOH') and (TipoLogo <> 'ACBRNFSEXLOGOV'))  then
-    TipoLogo := 'ACBRNFSEXLOGOH';
-
-  Res := TResourceStream.Create(HInstance, TipoLogo, RT_RCDATA);
-  try
-    LogoStream := TStringStream.Create('');
-    try
-      Res.SaveToStream(LogoStream);
-      TDFeReportFortes.CarregarLogo(rliLogoNFSe, LogoStream.DataString);
-    finally
-      LogoStream.Free;
-    end;
-  finally
-    Res.Free;
-  end;
+  TDFeReportFortes.CarregarLogo(rliLogoNFSe, fpDANFSe.LogoNFSe);
 
   rlbHomologacao.Visible := (fpNFSe.Producao = snNao);
 
@@ -416,10 +397,10 @@ begin
     Ambiente := 'Produção';
 
   rlmPrefeitura.Lines.Clear;
-  rlmPrefeitura.Lines.Add('Município: ' + fpNFSe.infNFSe.xLocEmi + '/' +
-                                          fpNFSe.infNFSe.UFLocEmi);
-  rlmPrefeitura.Lines.Add('Ambiente Gerador: ' + ambGerToStrText(fpNFSe.infNFSe.ambGer));
-  rlmPrefeitura.Lines.Add('Tipo Ambiente: ' + Ambiente);
+  rlmPrefeitura.Lines.Add(ACBrStr('Município: ' + fpNFSe.infNFSe.xLocEmi + '/' +
+                                          fpNFSe.infNFSe.UFLocEmi));
+  rlmPrefeitura.Lines.Add(ACBrStr('Ambiente Gerador: ' + ambGerToStrText(fpNFSe.infNFSe.ambGer)));
+  rlmPrefeitura.Lines.Add(ACBrStr('Tipo Ambiente: ' + Ambiente));
 end;
 
 procedure TfrlXDANFSeRLPadraoNacional.rlbBanda02_Ide_NFSeBeforePrint(
@@ -1103,13 +1084,30 @@ begin
   if (fpDANFSe.OutrasInformacaoesImp <> '') or (fpNFSe.OutrasInformacoes <> '') or
      (fpNFSe.InformacoesComplementares <> '') then
   begin
-    LInform := ACBrStr(fpDANFSe.OutrasInformacaoesImp + FQuebradeLinha +
-               fpNFSe.OutrasInformacoes + FQuebradeLinha +
-               fpNFSe.InformacoesComplementares);
-    LInform := 'Inf. Compl.: ' + LInform;
+    LInform := '';
+
+    if fpDANFSe.OutrasInformacaoesImp <> '' then
+      LInform := fpDANFSe.OutrasInformacaoesImp;
+
+    if fpNFSe.OutrasInformacoes <> '' then
+    begin
+      if LInform <> '' then
+        LInform := LInform + FQuebradeLinha;
+      LInform := LInform + fpNFSe.OutrasInformacoes;
+    end;
+
+    if fpNFSe.InformacoesComplementares <> '' then
+    begin
+      if LInform <> '' then
+        LInform := LInform + FQuebradeLinha;
+      LInform := LInform + fpNFSe.InformacoesComplementares;
+    end;
+
+    LInform := 'Inf. Compl.: ' + ACBrStr(LInform);
     rlmDadosAdicionais.Lines.Add(StringReplace(LInform,
                                        FQuebradeLinha, #13#10, [rfReplaceAll]));
   end;
+
 
   // ********** Totais Aproximados dos Tributos (Obrigatório)
   if fpNFSe.Servico.Valores.totTrib.vTotTribFed > 0 then
