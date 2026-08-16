@@ -3028,7 +3028,7 @@ Mecanismo de apoio/fomento ao Comércio Exterior utilizado pelo tomador do servi
           </xsd:documentation>
         </xsd:annotation>
       </xsd:element>
-      <xsd:element name="cTribMun" type="TSCodTribMun" minOccurs="1" maxOccurs="1">
+      <xsd:element name="cTribMun" type="TSCodTribMun" minOccurs="0" maxOccurs="1">
         <xsd:annotation>
           <xsd:documentation>Código de tributação municipal do ISSQN</xsd:documentation>
         </xsd:annotation>

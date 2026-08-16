@@ -264,8 +264,9 @@ begin
   Result.AppendChild(AddNode(tcStr, '#1', 'cTribNac', 6, 6, 1,
                                             NFSe.Servico.ItemListaServico, ''));
 
-  Result.AppendChild(AddNode(tcInt, '#1', 'cTribMun', 1, 10, 1,
-                   StrToIntDef(NFSe.Servico.CodigoTributacaoMunicipio, 0), ''));
+  if Trim(NFSe.Servico.CodigoTributacaoMunicipio) <> '' then
+    Result.AppendChild(AddNode(tcStr, '#1', 'cTribMun', 1, 10, 0,
+                     NFSe.Servico.CodigoTributacaoMunicipio, ''));
 
   Result.AppendChild(AddNode(tcStr, '#1', 'xDescServ', 1, 2000, 1,
     StringReplace(NFSe.Servico.Discriminacao, Opcoes.QuebraLinha,
