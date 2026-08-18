@@ -465,6 +465,8 @@ begin
     VersaoDados := '2.03';
     VersaoAtrib := '2.03';
   end;
+
+  ConfigSchemas.Validar := False;
 end;
 
 function TACBrNFSeProviderTinus203.CriarGeradorXml(
