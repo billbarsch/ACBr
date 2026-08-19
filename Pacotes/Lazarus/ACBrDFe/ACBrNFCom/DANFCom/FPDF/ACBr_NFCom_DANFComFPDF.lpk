@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CONFIG>
+  <Package Version="5">
+    <PathDelim Value="\"/>
+    <Name Value="ACBr_NFCom_DANFComFPDF"/>
+    <Type Value="RunAndDesignTime"/>
+    <Author Value="Projeto ACBr"/>
+    <CompilerOptions>
+      <Version Value="11"/>
+      <PathDelim Value="\"/>
+      <SearchPaths>
+        <IncludeFiles Value="..\..\..\..\..\..\Fontes\ACBrDFe\ACBrNFCom;..\..\..\..\..\..\Fontes\Terceiros\FPDF-Pascal"/>
+        <OtherUnitFiles Value="..\..\..\..\..\..\Fontes\ACBrDFe\ACBrNFCom;..\..\..\..\..\..\Fontes\ACBrDFe\ACBrNFCom\DANFCom;..\..\..\..\..\..\Fontes\ACBrDFe\ACBrNFCom\DANFCom\FPDF;..\..\..\..\..\..\Fontes\ACBrDFe\ACBrNFCom\Base;..\..\..\..\..\..\Fontes\Terceiros\FPDF-Pascal"/>
+        <UnitOutputDirectory Value="..\..\..\..\..\..\Lib\Lazarus\ACBrDFe\ACBrNFCom\$(TargetCPU)-$(TargetOS)"/>
+      </SearchPaths>
+    </CompilerOptions>
+    <Description Value="ACBr - DANFCom em FPDF, sem dependência de ambiente gráfico - (http://www.projetoacbr.com.br/)"/>
+    <License Value="LGPL"/>
+    <Files Count="2">
+      <Item1>
+        <Filename Value="..\..\..\..\..\..\Fontes\ACBrDFe\ACBrNFCom\DANFCom\FPDF\ACBrNFCom.DANFComFPDF.pas"/>
+        <UnitName Value="ACBrNFCom.DANFComFPDF"/>
+      </Item1>
+      <Item2>
+        <Filename Value="..\..\..\..\..\..\Fontes\ACBrDFe\ACBrNFCom\DANFCom\FPDF\ACBrNFComDANFComFPDFReg.pas"/>
+        <HasRegisterProc Value="True"/>
+        <UnitName Value="ACBrNFComDANFComFPDFReg"/>
+      </Item2>
+    </Files>
+    <RequiredPkgs Count="2">
+      <Item1>
+        <PackageName Value="ACBr_NFCom"/>
+      </Item1>
+      <Item2>
+        <PackageName Value="FCL"/>
+      </Item2>
+    </RequiredPkgs>
+    <UsageOptions>
+      <UnitPath Value="$(PkgOutDir)"/>
+    </UsageOptions>
+    <PublishOptions>
+      <Version Value="2"/>
+    </PublishOptions>
+  </Package>
+</CONFIG>
