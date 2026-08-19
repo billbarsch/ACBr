@@ -1,0 +1,40 @@
+{ Pacote design-time do DANFCom FPDF sem dependência de ambiente gráfico. }
+package DCLACBr_NFComDANFComFPDF;
+
+{$R *.res}
+{$IFDEF IMPLICITBUILDING This IFDEF should not be used by users}
+{$ALIGN 8}
+{$ASSERTIONS ON}
+{$BOOLEVAL OFF}
+{$DEBUGINFO OFF}
+{$EXTENDEDSYNTAX ON}
+{$IMPORTEDDATA ON}
+{$IOCHECKS ON}
+{$LOCALSYMBOLS ON}
+{$LONGSTRINGS ON}
+{$OPENSTRINGS ON}
+{$OPTIMIZATION OFF}
+{$OVERFLOWCHECKS ON}
+{$RANGECHECKS ON}
+{$REFERENCEINFO ON}
+{$SAFEDIVIDE OFF}
+{$STACKFRAMES ON}
+{$TYPEDADDRESS OFF}
+{$VARSTRINGCHECKS ON}
+{$WRITEABLECONST OFF}
+{$MINENUMSIZE 1}
+{$IMAGEBASE $400000}
+{$DEFINE DEBUG}
+{$ENDIF IMPLICITBUILDING}
+{$DESCRIPTION 'ACBr - (design-time) DANFCom em FPDF Report - (http://www.projetoacbr.com.br/)'}
+{$DESIGNONLY}
+{$IMPLICITBUILD ON}
+
+requires
+  rtl,
+  designide,
+  ACBr_NFComDANFComFPDF;
+
+contains
+  ACBrNFComDANFComFPDFReg in '..\..\..\..\..\..\Fontes\ACBrDFe\ACBrNFCom\DANFCom\FPDF\ACBrNFComDANFComFPDFReg.pas';
+end.
