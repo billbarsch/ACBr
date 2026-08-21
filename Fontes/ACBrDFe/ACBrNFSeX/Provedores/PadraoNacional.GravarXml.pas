@@ -1145,13 +1145,21 @@ begin
 end;
 
 function TNFSeW_PadraoNacional.GerarXMLEnderecoObra: TACBrXmlNode;
+var
+  EnderecoNacional: TACBrXmlNode;
 begin
   Result := CreateElement('end');
 
   if (NFSe.ConstrucaoCivil.Endereco.CodigoPais = 0) or
      (NFSe.ConstrucaoCivil.Endereco.CodigoPais = 1058) then
-    Result.AppendChild(AddNode(tcStr, '#1', 'CEP', 8, 8, 1,
-                                         NFSe.ConstrucaoCivil.Endereco.CEP, ''))
+  begin
+    EnderecoNacional := CreateElement('endNac');
+    EnderecoNacional.AppendChild(AddNode(tcStr, '#1', 'cMun', 7, 7, 1,
+      NFSe.ConstrucaoCivil.Endereco.CodigoMunicipio, ''));
+    EnderecoNacional.AppendChild(AddNode(tcStr, '#1', 'CEP', 8, 8, 1,
+      NFSe.ConstrucaoCivil.Endereco.CEP, ''));
+    Result.AppendChild(EnderecoNacional);
+  end
   else
     Result.AppendChild(GerarXMLEnderecoExteriorObra);
 

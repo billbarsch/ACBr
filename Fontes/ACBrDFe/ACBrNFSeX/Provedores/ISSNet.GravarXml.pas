@@ -71,6 +71,7 @@ type
 
   TNFSeW_ISSNetAPIPropria = class(TNFSeW_PadraoNacional)
   protected
+    procedure Configuracao; override;
     function GerarXMLPrestador: TACBrXmlNode; override;
     function GerarXMLObra: TACBrXmlNode; override;
     function GerarXMLAtividadeEvento: TACBrXmlNode; override;
@@ -194,6 +195,14 @@ end;
 
 { TNFSeW_ISSNetAPIPropria }
 
+procedure TNFSeW_ISSNetAPIPropria.Configuracao;
+begin
+  inherited Configuracao;
+
+  // Operacoes imobiliarias nacionais exigem o grupo imovel no IBS/CBS.
+  GerarImovel := True;
+end;
+
 function TNFSeW_ISSNetAPIPropria.GerarXml: Boolean;
 var
   NFSeNode, xmlNode: TACBrXmlNode;
@@ -281,6 +290,9 @@ end;
 
 function TNFSeW_ISSNetAPIPropria.GerarXMLImovel(
   Imovel: TDadosimovel): TACBrXmlNode;
+var
+  Endereco: TACBrXmlNode;
+  EnderecoNacional: TACBrXmlNode;
 begin
   Result := nil;
 
@@ -291,16 +303,38 @@ begin
     Result.AppendChild(AddNode(tcStr, '#1', 'inscImobFisc', 1, 30, 0,
                                                       Imovel.inscImobFisc, ''));
 
-    Result.AppendChild(GerarXMLEnderecoNacionalImovel(Imovel.ender));
+    if Imovel.ender.CEP <> '' then
+    begin
+      Endereco := CreateElement('end');
+      EnderecoNacional := CreateElement('endNac');
+      EnderecoNacional.AppendChild(AddNode(tcStr, '#1', 'cMun', 7, 7, 1,
+        IntToStr(Imovel.ender.CodigoMunicipio), ''));
+      EnderecoNacional.AppendChild(AddNode(tcStr, '#1', 'CEP', 8, 8, 1,
+        Imovel.ender.CEP, ''));
+      Endereco.AppendChild(EnderecoNacional);
+      Endereco.AppendChild(AddNode(tcStr, '#1', 'xLgr', 1, 255, 1,
+        Imovel.ender.xLgr, ''));
+      Endereco.AppendChild(AddNode(tcStr, '#1', 'nro', 1, 60, 1,
+        Imovel.ender.nro, ''));
+      Endereco.AppendChild(AddNode(tcStr, '#1', 'xCpl', 1, 60, 0,
+        Imovel.ender.xCpl, ''));
+      Endereco.AppendChild(AddNode(tcStr, '#1', 'xBairro', 1, 60, 1,
+        Imovel.ender.xBairro, ''));
+      Result.AppendChild(Endereco);
+    end
+    else
+      Result.AppendChild(GerarXMLEnderecoNacionalImovel(Imovel.ender));
   end;
 end;
 
 function TNFSeW_ISSNetAPIPropria.GerarXMLObra: TACBrXmlNode;
 begin
+  // O schema ISSNet aceita apenas inscImobFisc e end dentro de obra.
+  // O codigo recebido pela API identifica a obra neste campo municipal.
   Result := CreateElement('obra');
 
   Result.AppendChild(AddNode(tcStr, '#1', 'inscImobFisc', 1, 30, 0,
-                                      NFSe.ConstrucaoCivil.inscImobFisc, ''));
+    NFSe.ConstrucaoCivil.CodigoObra, ''));
 
   Result.AppendChild(GerarXMLEnderecoObra);
 end;
