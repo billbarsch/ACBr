@@ -182,6 +182,7 @@ var
   ANodeArray: TACBrXmlNodeArray;
   AErro: TNFSeEventoCollectionItem;
   Descricao: String;
+  DescricaoNormalizada: String;
 begin
   ANode := RootNode.Childrens.FindAnyNs(AListTag);
 
@@ -195,8 +196,13 @@ begin
   for I := Low(ANodeArray) to High(ANodeArray) do
   begin
     Descricao := ObterConteudoTag(ANodeArray[I].Childrens.FindAnyNs('descricao'), tcStr);
+    DescricaoNormalizada := LowerCase(Descricao);
 
-    if Descricao <> 'Operação concluída com sucesso' then
+    // O SigISSWeb confirma cancelamentos dentro da lista de mensagens. A
+    // verificacao por trechos ASCII evita depender da codificacao do retorno.
+    if not ((Pos('opera', DescricaoNormalizada) > 0) and
+            (Pos('conclu', DescricaoNormalizada) > 0) and
+            (Pos('sucesso', DescricaoNormalizada) > 0)) then
     begin
       AErro := Response.Erros.New;
       AErro.Codigo := ObterConteudoTag(ANodeArray[I].Childrens.FindAnyNs('codigo'), tcStr);
@@ -256,7 +262,11 @@ var
   ANode: TACBrXmlNode;
   xRetorno: string;
 begin
-  xRetorno := SeparaDados(Response.ArquivoRetorno, 'descricao');
+  // O endpoint REST de login atual retorna o token Bearer em texto puro.
+  // Versoes anteriores podiam entrega-lo dentro da tag descricao.
+  xRetorno := Trim(SeparaDados(Response.ArquivoRetorno, 'descricao'));
+  if xRetorno = '' then
+    xRetorno := Trim(Response.ArquivoRetorno);
 
   if Pos('Bearer', xRetorno) = 0 then
   begin
@@ -292,7 +302,10 @@ begin
     end;
   end
   else
+  begin
     Response.Token := xRetorno;
+    Response.Sucesso := True;
+  end;
 end;
 
 procedure TACBrNFSeProviderSigISSWeb.PrepararEmitir(
