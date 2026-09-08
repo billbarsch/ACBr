@@ -719,7 +719,7 @@ end;
 function TACBrDANFSeFPDFPadraoNacional.PossuiISSQN: Boolean;
 begin
   Result := (FNFSe <> nil) and (FNFSe.Servico <> nil) and
-            (FNFSe.Servico.Valores.ValorIss > 0);
+            (FNFSe.Servico.Valores.tribMun.tribISSQN = tiOperacaoTributavel);
 end;
 
 procedure TACBrDANFSeFPDFPadraoNacional.DesenharBordaPagina(PDF: IFPDF);
