@@ -4,128 +4,74 @@ Data de início: 08/09/2026
 
 ## Objetivo
 
-Atualizar o fork `billbarsch/ACBr` com o `ProjetoACBr/ACBr`, preservando somente os ajustes próprios que continuarem necessários e comprovados.
+Atualizar o fork `billbarsch/ACBr` a partir de `ProjetoACBr/ACBr`, preservando somente ajustes próprios que ainda sejam necessários para emissão, consulta, cancelamento ou geração de DANFCom sem ambiente gráfico.
 
-Nenhum envio ao Git remoto deve ser feito durante a auditoria. O `master` atual deve permanecer preservado até a conclusão dos testes e autorização explícita.
+## Estado preservado antes da atualização
 
-## Estado inicial
+- Fork original: `d0b9ec9902`.
+- Upstream usado como base: `b08d6e285a`.
+- Base comum: `264f2abf52`.
+- Tag local de retorno: `acbr-fork-antes-atualizacao-20260908`.
+- Backup completo: `backups/acbr-atualizacao-20260908/acbr-fork-completo.bundle`.
+- Candidata: branch `atualizacao-acbr-20260908`, criada diretamente sobre o upstream.
 
-- Fork atual: `d0b9ec9902`.
-- Upstream atual: `b08d6e285a`.
-- Base comum identificada: `264f2abf52`.
-- Commits próprios do fork desde a base comum: 17.
-- Arquivos alterados por esses commits: 19.
-- Situação do repositório `ACBr`: limpo no início da auditoria.
-- Situação do repositório `acbrcmd`: possui alteração em `funcoesacbrnfse.pas` e diversos artefatos locais de testes; será auditado separadamente.
+## Critério de decisão
 
-## Legenda das decisões
+- `MANTER`: ajuste ainda ausente na origem e necessário para um fluxo fiscal real ou para a compilação headless.
+- `MANTER NA TABELA`: configuração municipal conferida em `acbrcmd/cidades_atualizadas.txt` e reaplicada no INI e no recurso compilado.
+- `SUBSTITUÍDO PELO UPSTREAM`: a origem possui solução equivalente ou mais atual.
+- `DESCARTAR`: ajuste antigo, genérico sem evidência suficiente ou com risco de regressão na base atual.
+- `VALIDAR`: reaplicado, aguardando a compilação final do `acbrcmd`.
 
-- `PENDENTE`: ainda não foi analisado.
-- `EM ANÁLISE`: ajuste aberto para decisão atual.
-- `MANTER`: será reaplicado na base atualizada.
-- `DESCARTAR`: não será reaplicado.
-- `SUBSTITUÍDO PELO UPSTREAM`: o projeto original já contém solução equivalente ou mais nova.
-- `REAPLICAR PARCIALMENTE`: somente parte do commit será reaplicada.
-- `VALIDADO`: reaplicado e confirmado por compilação/teste.
+## Decisão individual dos commits do fork
 
-## Roadmap
+| Ordem | Commit | Ajuste | Decisão | Motivo objetivo |
+|---:|---|---|---|---|
+| 1 | `9040449da4` | Cidades e serviços NFSe | MANTER NA TABELA | Três blocos independentes permanecem ausentes na origem; São Geraldo foi substituído pela configuração final do item 2. |
+| 2 | `f4c6123ee1` | São Geraldo do Araguaia | MANTER NA TABELA | Configuração Fiorilli 1.01, serviço nacional, consultas próprias e porta 5661 conferidos. |
+| 3 | `60b98e1899` | XML legado ISS São Paulo | MANTER | No layout 1.00 a tag opcional `RetencaoPisCofins` ainda é emitida pela origem e pode causar rejeição. |
+| 4 | `804d73c783` | Mesclagem MirrorProjetoACBr | DESCARTAR | O segundo pai já é ancestral do upstream atual; reaplicar só duplicaria uma sincronização histórica. |
+| 5 | `0753354301` | Mesclagem MirrorProjetoACBr | DESCARTAR | O segundo pai já é ancestral do upstream atual; reaplicar só duplicaria uma sincronização histórica. |
+| 6 | `7849cb07d4` | Endpoint de Brasília | MANTER NA TABELA | Bloco ISSNet nacional reaplicado; o fluxo síncrono e de cancelamento já está no `acbrcmd`. |
+| 7 | `5db1724872` | Endpoint oficial de Brasília | MANTER NA TABELA | Representado pela configuração final do INI. |
+| 8 | `d0b3ac83f1` | Layouts municipais gerais | DESCARTAR | O ajuste antigo de obra/endereço foi superado pela correção mais completa `ACBR-9738` da origem; tornar `cTribMun` opcional contraria o schema atual. |
+| 9 | `ed2a826e57` | Validação Tinus | SUBSTITUÍDO PELO UPSTREAM | O upstream atual já configura `ConfigSchemas.Validar := False` no provedor Tinus. |
+| 10 | `6811236492` | DANFCom FPDF sem ambiente gráfico | MANTER | A origem não contém a implementação FPDF, nem nos branches ou pull requests públicos pesquisados; o `acbrcmd` headless a compila explicitamente. |
+| 11 | `2f31fc8028` | Grupos de obra e imóvel | DESCARTAR | A origem atual gera endereço nacional, exterior e inscrição do imóvel com estrutura mais completa; reaplicar o código antigo pode regredir campos. |
+| 12 | `e5b4bedbb0` | Endpoint João Pessoa | MANTER NA TABELA | Bloco DSF 2.03 municipal reaplicado, com produção, homologação e `Params=*`. |
+| 13 | `a6499d6602` | Envio REST DSF | SUBSTITUÍDO PELO UPSTREAM | A origem já possui preparação de arquivo, URL com caminho e envio GZip/Base64 para DPS e eventos. |
+| 14 | `59bfe9b2f0` | Serviços João Pessoa | MANTER NA TABELA | Representado pela configuração final do INI. |
+| 15 | `1c0b6881a9` | Retorno SigISSWeb | MANTER | A origem ainda não normaliza retorno/token nem marca resposta bem-sucedida; necessário para login, cancelamento e resposta do provedor. |
+| 16 | `a533d818bc` | Palmital no Equiplano | MANTER NA TABELA | Bloco Equiplano com `CodigoCidade:38` reaplicado. |
+| 17 | `d0b9ec9902` | Consultas e eventos SilTecnologia | MANTER | O fluxo SOAP assinado, a consulta e os eventos municipais não existem na origem. Há validação histórica de emissão e cancelamento bem-sucedidos. |
 
-1. Preservar o estado atual com tag e backup local.
-2. Catalogar os 17 commits próprios do fork.
-3. Comparar cada ajuste com o upstream atual.
-4. Registrar uma decisão individual para cada ajuste.
-5. Criar uma base candidata a partir do upstream, sem alterar o `master` atual.
-6. Reaplicar somente os ajustes classificados como `MANTER` ou `REAPLICAR PARCIALMENTE`.
-7. Atualizar a referência do ACBr nos `Dockerfile` do `acbrcmd`.
-8. Revisar os patches locais do `acbrcmd`, especialmente a diferença entre desenvolvimento e produção.
-9. Compilar o ACBr e o `acbrcmd`.
-10. Testar os provedores afetados e comparar XML/PDF quando aplicável.
-11. Atualizar o `master` somente após a aprovação e publicar apenas quando solicitado.
+## Configurações municipais reaplicadas
 
-## Inventário dos ajustes próprios do fork
-
-Todos os itens abaixo estão aplicados na base atual do fork. A coluna decisão indica o que será feito na futura base atualizada.
-
-| Ordem | Commit | Data | Ajuste | Estado atual | Decisão na nova base |
-|---:|---|---|---|---|---|
-| 1 | `9040449da4` | 21/07/2026 | Atualiza cidades e serviços NFSe | Aplicado na base atual | Manter parcialmente; tabela conferida |
-| 2 | `f4c6123ee1` | 22/07/2026 | Corrige configuração de NFSe de São Geraldo do Araguaia | Aplicado na base atual | Manter configuração final conferida |
-| 3 | `60b98e1899` | 28/07/2026 | Corrige XML legado do ISS São Paulo | Aplicado na base atual | Pendente |
-| 4 | `804d73c783` | 30/07/2026 | Atualiza o fork com o MirrorProjetoACBr | Aplicado na base atual | Pendente |
-| 5 | `0753354301` | 05/08/2026 | Mescla alterações do MirrorProjetoACBr | Aplicado na base atual | Pendente |
-| 6 | `7849cb07d4` | 07/08/2026 | Atualiza endpoint de NFSe de Brasília | Aplicado na base atual | Manter bloco do INI; código pendente |
-| 7 | `5db1724872` | 07/08/2026 | Corrige endpoint oficial de NFSe de Brasília | Aplicado na base atual | Manter bloco do INI; código pendente |
-| 8 | `d0b3ac83f1` | 16/08/2026 | Ajusta layouts municipais de NFSe | Aplicado na base atual | Pendente |
-| 9 | `ed2a826e57` | 17/08/2026 | Correção adicional sem descrição detalhada no título | Aplicado na base atual | Pendente |
-| 10 | `6811236492` | 19/08/2026 | Adiciona DANFCom FPDF sem ambiente gráfico | Aplicado na base atual | Pendente |
-| 11 | `2f31fc8028` | 21/08/2026 | Corrige grupos de obra e imóvel na NFSe | Aplicado na base atual | Pendente |
-| 12 | `e5b4bedbb0` | 01/09/2026 | Atualiza endpoint nacional de NFSe de João Pessoa | Aplicado na base atual | Manter bloco municipal do INI; validar código |
-| 13 | `a6499d6602` | 02/09/2026 | Corrige envio REST do provedor DSF | Aplicado na base atual | Manter; validar código |
-| 14 | `59bfe9b2f0` | 03/09/2026 | Atualiza serviços de NFSe de João Pessoa | Aplicado na base atual | Manter bloco municipal do INI; validar código |
-| 15 | `1c0b6881a9` | 04/09/2026 | Corrige retorno do SigISSWeb | Aplicado na base atual | Pendente |
-| 16 | `a533d818bc` | 07/09/2026 | Configura Palmital no provedor Equiplano | Aplicado na base atual | Manter bloco do INI; validar código |
-| 17 | `d0b9ec9902` | 08/09/2026 | Corrige consultas e eventos da NFS-e SilTecnologia | Aplicado na base atual | Pendente |
-
-## Ajustes fora do histórico do fork
-
-Estes itens não são commits do repositório `ACBr`; pertencem ao `acbrcmd` e precisam de decisão própria:
-
-| Item | Local | Estado atual | Decisão |
-|---|---|---|---|
-| Regime especial ausente deve virar `0` no padrão nacional | `acbrcmd/correcoes/acbr-regime-especial.patch` | Aplicado nos ambientes de desenvolvimento e produção | Pendente |
-| Desativação da validação de esquema do provedor Tinus | `acbrcmd/correcoes/acbr-tinus-validacao.patch` | Aplicado no `Dockerfile.dev`; não aplicado no `Dockerfile` de produção | Pendente |
-| Referência do ACBr usada na imagem | `acbrcmd/Dockerfile` e `acbrcmd/Dockerfile.dev` | Fixa em `a533d818bc` | Pendente |
-
-## Conferência de cidades_atualizadas.txt
-
-Conferência realizada em 08/09/2026 usando `acbrcmd/cidades_atualizadas.txt` como fonte de verdade.
-
-### Resultado da tabela municipal
-
-Os sete blocos abaixo já estavam presentes no `ACBrNFSeXServicos.ini` atual e foram comparados campo a campo:
+`acbrcmd/cidades_atualizadas.txt` é a fonte de verdade. Os sete blocos abaixo foram comparados campo a campo e reaplicados na candidata em `ACBrNFSeXServicos.ini`:
 
 - Costa Rica/MS (`5003256`) — Fiorilli 2.00.
 - São João da Canabrava/PI (`2209856`) — Agili.
 - São João Batista/SC (`4216305`) — Betha com endereço do serviço.
-- São Geraldo do Araguaia/PA (`1507458`) — Fiorilli 1.01, serviço nacional e serviços próprios de consulta.
-- Brasília/DF (`5300108`) — ISSNet com o endereço nacional atualizado.
-- João Pessoa/PB (`2507507`) — DSF 2.03 municipal, endpoints de produção/homologação e `Params=*`.
+- São Geraldo do Araguaia/PA (`1507458`) — Fiorilli 1.01, serviço nacional, consultas próprias e porta 5661.
+- Brasília/DF (`5300108`) — ISSNet no endereço nacional atualizado.
+- João Pessoa/PB (`2507507`) — DSF 2.03 municipal, produção, homologação e `Params=*`.
 - Palmital/PR (`4117800`) — Equiplano com `CodigoCidade:38`.
 
-Na base atual do fork, todos os campos da fonte já estavam aplicados. Na candidata criada sobre o `upstream`, os sete blocos foram reaplicados sobre a versão mais nova, preservando a codificação legada do arquivo. O recurso binário candidato `ACBrNFSeXServicos.res` foi regenerado a partir do `.ini` com `windres` e conferido com os sete marcadores municipais, incluindo `CodigoCidade:38`.
+O recurso `ACBrNFSeXServicos.res` foi regenerado a partir do INI com `windres` e conferido com os sete marcadores, inclusive `CodigoCidade:38`.
 
-**Estado no fork atual:** `APLICADO E CONFERIDO`.
+## Ajustes do `acbrcmd` revisados separadamente
 
-**Estado na candidata:** `REAPLICADO E CONFERIDO`.
+| Ajuste | Decisão | Motivo objetivo |
+|---|---|---|
+| Patch de regime especial nacional | DESCARTAR | O `acbrcmd` já seleciona o provedor nacional e o upstream atual converte `retNenhum` em `0`; o patch só cobre um estado inválido que não ocorre no fluxo tipado. |
+| Patch Tinus | DESCARTAR | A origem atual já contém a desativação da validação de schema. |
+| Regra local de locação de Goiânia (`5208707` e item `990101`) | DESCARTAR | Não há commit, caso fiscal ou fixture que acione essa condição; os exemplos de Goiânia usam outros itens de serviço. Não será enviada como ajuste especulativo. |
+| Código de Brasília | MANTER | Já está versionado no `acbrcmd`: lote síncrono, assinatura do RPS/lote e cancelamento nacional. |
+| Referência do ACBr no Docker | VALIDAR | Será fixada no commit final da candidata antes da compilação da imagem. |
 
-## Outros ajustes que ainda precisam ser conferidos
+## Etapas finais
 
-O arquivo de cidades também registra comportamentos que não são resolvidos apenas no `.ini`:
-
-1. **Brasília no `acbrcmd`:** o código já contém o modo síncrono, assinatura de RPS e lote, `LoteDps`, reconhecimento genérico de `EnviarLoteDpsSincronoResposta` e cancelamento nacional por evento com extração do `Id`. Falta validar o fluxo completo com XML autorizado e cancelado.
-2. **João Pessoa/DSF:** a tabela mantém o fluxo municipal DSF 2.03 e `Params=*`; falta confirmar por teste que o código continua usando esse fluxo e localizar ou repetir a validação da emissão autorizada registrada no arquivo.
-3. **Palmital/Equiplano:** a tabela está correta e o ACBr faz a leitura genérica de `Params`; falta confirmar que `CodigoCidade:38` chega como `idEntidade` no XML e testar emissão/consulta.
-4. **Recurso compilado:** concluído para a tabela atual; deve ser regenerado novamente sempre que qualquer cidade for alterada.
-5. **Referência do Docker:** atualizar depois da escolha dos commits, pois o `acbrcmd` ainda baixa o ACBr pelo commit fixado `a533d818bc`.
-6. **Ajustes do fork que não estão no arquivo de cidades:** ISS São Paulo, layouts municipais gerais, DANFCom FPDF headless, grupos de obra e imóvel, SigISSWeb e SilTecnologia.
-
-## Item concluído
-
-### 1. Atualização de cidades e serviços NFSe — `9040449da4`
-
-O commit altera a tabela `ACBrNFSeXServicos.ini` e seu recurso compilado `ACBrNFSeXServicos.res`:
-
-- São Geraldo do Araguaia/PA: muda o serviço Fiorilli da porta `8080` para `5661` e adiciona `Assinar:NaoAssinar`.
-- São João da Canabrava/PI: define o provedor como `Agili`.
-- São João Batista/SC: define o provedor `Betha` e o endereço do serviço.
-- Costa Rica/MS: troca `Pronim` pelo provedor `Fiorilli`, versão `2.00`, com novo endereço.
-
-Na referência atual do upstream, esses quatro pontos ainda aparecem com os valores antigos. O ajuste não parece ter sido incorporado pelo projeto original.
-
-Dependência identificada: o commit seguinte, `f4c6123ee1`, altera novamente São Geraldo do Araguaia, trocando a configuração provisória por Fiorilli 1.01, serviço nacional e `ServicosAPIPropria`. Por isso, a parte de São Geraldo deste item não deve ser reaplicada isoladamente.
-
-**Decisão:** `MANTER PARCIALMENTE — os três municípios independentes foram conferidos; São Geraldo do Araguaia fica representado pela configuração final do item 2`.
-
-## Próximo item para decisão
-
-O próximo ajuste a ser analisado individualmente será o commit `60b98e1899`, referente à correção do XML legado do ISS São Paulo. Nenhum outro commit próprio foi reaplicado na candidata até que esse item seja comparado com o `upstream` e decidido.
+1. Reaplicar os quatro ajustes de código classificados como `MANTER`: São Paulo, DANFCom FPDF, SigISSWeb e SilTecnologia.
+2. Conferir o diff final contra `upstream/master` e compilar a imagem do `acbrcmd` com a referência exata do fork.
+3. Promover a candidata para `master`, preservar a tag de retorno e publicar os dois repositórios.
+4. Verificar a publicação automática com o commit implantado, a saúde pública e o processo do serviço. A verificação não emitirá documento fiscal real sem um cenário de teste específico.
