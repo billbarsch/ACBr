@@ -141,9 +141,20 @@ type
                                      const AListTag: string = 'Erros'); override;
 
     function PrepararArquivoEnvio(const aXml: string; aMetodo: TMetodo): string; override;
+    function MontarXmlConsultaNacional(const ACnpj, AChaveAcesso, ADps: string): string;
+    procedure AssinarXmlConsultaNacional(Response: TNFSeWebserviceResponse);
+    procedure TratarRetornoConsultaNacional(Response: TNFSeWebserviceResponse);
 
     procedure PrepararEmitir(Response: TNFSeEmiteResponse); override;
     procedure TratarRetornoEmitir(Response: TNFSeEmiteResponse); override;
+
+    procedure PrepararConsultaNFSeporRps(Response: TNFSeConsultaNFSeporRpsResponse); override;
+    procedure AssinarConsultaNFSeporRps(Response: TNFSeConsultaNFSeporRpsResponse); override;
+    procedure TratarRetornoConsultaNFSeporRps(Response: TNFSeConsultaNFSeporRpsResponse); override;
+
+    procedure PrepararConsultaNFSeporChave(Response: TNFSeConsultaNFSeResponse); override;
+    procedure AssinarConsultaNFSeporChave(Response: TNFSeConsultaNFSeResponse); override;
+    procedure TratarRetornoConsultaNFSeporChave(Response: TNFSeConsultaNFSeResponse); override;
 
     procedure PrepararEnviarEvento(Response: TNFSeEnviarEventoResponse); override;
     procedure AssinarEnviarEvento(Response: TNFSeEnviarEventoResponse); override;
@@ -574,8 +585,23 @@ function TACBrNFSeXWebserviceSilTecnologiaAPIPropria.TratarXmlRetornado(
 begin
   Result := inherited TratarXmlRetornado(aXML);
 
+  // O retorno da consulta traz uma NFSe dentro de XML, com duas camadas de
+  // entidades. Preserve a camada interna para nao transformar as tags em
+  // elementos do envelope antes que o parser extraia o conteudo de XML.
+  Result := StringReplace(Result, '&amp;lt;', '__ACBR_NFSE_ENTIDADE_MENOR__', [rfReplaceAll]);
+  Result := StringReplace(Result, '&amp;gt;', '__ACBR_NFSE_ENTIDADE_MAIOR__', [rfReplaceAll]);
+  Result := StringReplace(Result, '&amp;quot;', '__ACBR_NFSE_ENTIDADE_ASPAS__', [rfReplaceAll]);
+  Result := StringReplace(Result, '&amp;apos;', '__ACBR_NFSE_ENTIDADE_APOSTROFO__', [rfReplaceAll]);
+  Result := StringReplace(Result, '&amp;amp;', '__ACBR_NFSE_ENTIDADE_E_COMERCIAL__', [rfReplaceAll]);
+  Result := StringReplace(Result, '&amp;#13;', '__ACBR_NFSE_ENTIDADE_CR__', [rfReplaceAll]);
   Result := RemoverCaracteresDesnecessarios(Result);
   Result := ParseText(Result);
+  Result := StringReplace(Result, '__ACBR_NFSE_ENTIDADE_MENOR__', '&lt;', [rfReplaceAll]);
+  Result := StringReplace(Result, '__ACBR_NFSE_ENTIDADE_MAIOR__', '&gt;', [rfReplaceAll]);
+  Result := StringReplace(Result, '__ACBR_NFSE_ENTIDADE_ASPAS__', '&quot;', [rfReplaceAll]);
+  Result := StringReplace(Result, '__ACBR_NFSE_ENTIDADE_APOSTROFO__', '&apos;', [rfReplaceAll]);
+  Result := StringReplace(Result, '__ACBR_NFSE_ENTIDADE_E_COMERCIAL__', '&amp;', [rfReplaceAll]);
+  Result := StringReplace(Result, '__ACBR_NFSE_ENTIDADE_CR__', '&#13;', [rfReplaceAll]);
   Result := RemoverDeclaracaoXML(Result);
 
   Result := RemoverPrefixosDesnecessarios(Result);
@@ -622,18 +648,34 @@ end;
 
 function TACBrNFSeXWebserviceSilTecnologiaAPIPropria.ConsultarNFSePorRps(
   const ACabecalho, AMSG: string): string;
+var
+  Request: string;
 begin
   FPMsgOrig := AMSG;
 
-  Result := Executar('', FPMsgOrig, [], []);
+  Request := RemoverDeclaracaoXML(AMSG);
+  Request := '<nfse:NotaFiscalNacionalConsultar>' +
+               '<xml>' + IncluirCDATA(Request) + '</xml>' +
+             '</nfse:NotaFiscalNacionalConsultar>';
+
+  Result := Executar('', Request, ['return', 'Retorno'],
+    ['xmlns:nfse="http://webservices.sil.com/"']);
 end;
 
 function TACBrNFSeXWebserviceSilTecnologiaAPIPropria.ConsultarNFSePorChave(
   const ACabecalho, AMSG: string): string;
+var
+  Request: string;
 begin
   FPMsgOrig := AMSG;
 
-  Result := Executar('', FPMsgOrig, [], []);
+  Request := RemoverDeclaracaoXML(AMSG);
+  Request := '<nfse:NotaFiscalNacionalConsultar>' +
+               '<xml>' + IncluirCDATA(Request) + '</xml>' +
+             '</nfse:NotaFiscalNacionalConsultar>';
+
+  Result := Executar('', Request, ['return', 'Retorno'],
+    ['xmlns:nfse="http://webservices.sil.com/"']);
 end;
 
 function TACBrNFSeXWebserviceSilTecnologiaAPIPropria.ConsultarDFe(
@@ -756,6 +798,8 @@ begin
   begin
     RpsGerarNFSe := True;
     EnviarEvento := True;
+    ConsultarNFSeRps := True;
+    ConsultarNFSePorChave := True;
   end;
 
   SetNomeXSD('***');
@@ -791,7 +835,18 @@ function TACBrNFSeProviderSilTecnologiaAPIPropria.CriarServiceClient(
 var
   URL: string;
 begin
-  URL := GetWebServiceURL(AMetodo);
+  // A API nacional da Sil usa o mesmo endpoint SOAP municipal para gerar e
+  // consultar a NFS-e. As URLs de consulta da classe base apontam para o
+  // servico nacional REST e nao servem para este contrato SOAP.
+  if AMetodo in [tmEnviarEvento, tmConsultarNFSePorRps, tmConsultarNFSePorChave] then
+  begin
+    if ConfigGeral.Ambiente = taProducao then
+      URL := ConfigWebServices.Producao.Recepcionar
+    else
+      URL := ConfigWebServices.Homologacao.Recepcionar;
+  end
+  else
+    URL := GetWebServiceURL(AMetodo);
 
   if URL <> '' then
   begin
@@ -1030,6 +1085,207 @@ begin
     Result := ChangeLineBreak(aXml, '');
 end;
 
+function TACBrNFSeProviderSilTecnologiaAPIPropria.MontarXmlConsultaNacional(
+  const ACnpj, AChaveAcesso, ADps: string): string;
+begin
+  Result := '<?xml version="1.0" encoding="UTF-8"?>' +
+    '<ConsultarNFE><consul><CNPJ>' + OnlyNumber(ACnpj) + '</CNPJ></consul>' +
+    '<chaveAcesso>' + OnlyNumber(AChaveAcesso) + '</chaveAcesso>' +
+    '<DPS>' + OnlyNumber(ADps) + '</DPS>' +
+    '<Signature xmlns="http://www.w3.org/2000/09/xmldsig#"> </Signature>' +
+    '</ConsultarNFE>';
+end;
+
+procedure TACBrNFSeProviderSilTecnologiaAPIPropria.AssinarXmlConsultaNacional(
+  Response: TNFSeWebserviceResponse);
+var
+  AErro: TNFSeEventoCollectionItem;
+begin
+  try
+    Response.ArquivoEnvio := FAOwner.SSL.Assinar(Response.ArquivoEnvio,
+      'ConsultarNFE', 'consul', '', '', '', 'ID');
+  except
+    on E: Exception do
+    begin
+      AErro := Response.Erros.New;
+      AErro.Codigo := Cod801;
+      AErro.Descricao := ACBrStr(Desc801 + E.Message);
+    end;
+  end;
+end;
+
+procedure TACBrNFSeProviderSilTecnologiaAPIPropria.TratarRetornoConsultaNacional(
+  Response: TNFSeWebserviceResponse);
+var
+  Documento, DocumentoNfse: TACBrXmlDocument;
+  NoNfse, NoInfNfse, NoChave, NoXml: TACBrXmlNode;
+  XmlNfse, XmlNfseParaLeitura, ChaveAcesso, NumeroNota: string;
+  Nota: TNotaFiscal;
+begin
+  Documento := TACBrXmlDocument.Create;
+  DocumentoNfse := TACBrXmlDocument.Create;
+  try
+    try
+      if Response.ArquivoRetorno = '' then
+      begin
+        Response.Erros.New.Codigo := Cod201;
+        Response.Erros[Response.Erros.Count - 1].Descricao := ACBrStr(Desc201);
+        Exit;
+      end;
+
+      Documento.LoadFromXml(Response.ArquivoRetorno);
+      NoNfse := nil;
+
+      if SameText(Documento.Root.Name, 'NFSe') then
+        NoNfse := Documento.Root
+      else
+        NoNfse := Documento.Root.Childrens.FindAnyNs('NFSe');
+
+      if Assigned(NoNfse) then
+        XmlNfse := NoNfse.OuterXml
+      else
+      begin
+        NoXml := Documento.Root.Childrens.FindAnyNs('xml');
+        if Assigned(NoXml) then
+          XmlNfse := ParseText(ObterConteudoTag(NoXml, tcStr));
+      end;
+
+      if Pos('<', XmlNfse) = 0 then
+        XmlNfse := StringReplace(XmlNfse, '&lt;', '<', [rfReplaceAll]);
+      if Pos('>', XmlNfse) = 0 then
+        XmlNfse := StringReplace(XmlNfse, '&gt;', '>', [rfReplaceAll]);
+
+      if Pos('<', XmlNfse) = 0 then
+      begin
+        ProcessarMensagemErros(Documento.Root, Response);
+        if Response.Erros.Count = 0 then
+        begin
+          Response.Erros.New.Codigo := Cod203;
+          Response.Erros[Response.Erros.Count - 1].Descricao :=
+            ACBrStr('O provedor nao retornou o XML da NFSe na consulta.');
+        end;
+        Exit;
+      end;
+
+      DocumentoNfse.LoadFromXml(XmlNfse);
+      if not SameText(DocumentoNfse.Root.Name, 'NFSe') then
+      begin
+        NoNfse := DocumentoNfse.Root.Childrens.FindAnyNs('NFSe');
+        if Assigned(NoNfse) then
+          XmlNfse := NoNfse.OuterXml;
+      end;
+
+      NoChave := Documento.Root.Childrens.FindAnyNs('chaveAcesso');
+      ChaveAcesso := ObterConteudoTag(NoChave, tcStr);
+      if ChaveAcesso = '' then
+      begin
+        NoChave := Documento.Root.Childrens.FindAnyNs('chNFSe');
+        ChaveAcesso := ObterConteudoTag(NoChave, tcStr);
+      end;
+      if ChaveAcesso <> '' then
+        Response.idNota := ChaveAcesso;
+
+      NoInfNfse := DocumentoNfse.Root.Childrens.FindAnyNs('infNFSe');
+      if Assigned(NoInfNfse) then
+      begin
+        NumeroNota := ObterConteudoTag(NoInfNfse.Childrens.FindAnyNs('nNFSe'), tcStr);
+        if NumeroNota = '' then
+          NumeroNota := ObterConteudoTag(NoInfNfse.Childrens.FindAnyNs('Numero'), tcStr);
+      end;
+      if NumeroNota <> '' then
+        Response.NumeroNota := NumeroNota;
+
+      Response.XmlRetorno := XmlNfse;
+      // A leitura nacional do ACBr usa a raiz Nfse, enquanto a Sil devolve
+      // NFSe. Normalize somente a copia entregue ao leitor e mantenha o XML
+      // original para o retorno da API e para o armazenamento da nota.
+      XmlNfseParaLeitura := StringReplace(XmlNfse, '<NFSe ', '<Nfse ', [rfReplaceAll]);
+      XmlNfseParaLeitura := StringReplace(XmlNfseParaLeitura, '</NFSe>', '</Nfse>', [rfReplaceAll]);
+      Nota := CarregarXmlNfse(nil, XmlNfseParaLeitura);
+      if Assigned(Nota) then
+        Nota.XmlNfse := XmlNfse;
+      Response.Sucesso := Response.Erros.Count = 0;
+    except
+      on E: Exception do
+      begin
+        Response.Erros.New.Codigo := Cod999;
+        Response.Erros[Response.Erros.Count - 1].Descricao :=
+          ACBrStr(Desc999 + E.Message);
+      end;
+    end;
+  finally
+    DocumentoNfse.Free;
+    Documento.Free;
+  end;
+end;
+
+procedure TACBrNFSeProviderSilTecnologiaAPIPropria.PrepararConsultaNFSeporRps(
+  Response: TNFSeConsultaNFSeporRpsResponse);
+var
+  AErro: TNFSeEventoCollectionItem;
+  CnpjPrestador: string;
+begin
+  if EstaVazio(Response.NumeroRps) then
+  begin
+    AErro := Response.Erros.New;
+    AErro.Codigo := Cod126;
+    AErro.Descricao := ACBrStr(Desc126);
+    Exit;
+  end;
+
+  CnpjPrestador := TACBrNFSeX(FAOwner).Configuracoes.Geral.Emitente.CNPJ;
+  Response.ArquivoEnvio := MontarXmlConsultaNacional(CnpjPrestador, '', Response.NumeroRps);
+  Path := '';
+  Method := 'POST';
+end;
+
+procedure TACBrNFSeProviderSilTecnologiaAPIPropria.AssinarConsultaNFSeporRps(
+  Response: TNFSeConsultaNFSeporRpsResponse);
+begin
+  if ConfigAssinar.ConsultarNFSeRps then
+    AssinarXmlConsultaNacional(Response);
+end;
+
+procedure TACBrNFSeProviderSilTecnologiaAPIPropria.TratarRetornoConsultaNFSeporRps(
+  Response: TNFSeConsultaNFSeporRpsResponse);
+begin
+  TratarRetornoConsultaNacional(Response);
+end;
+
+procedure TACBrNFSeProviderSilTecnologiaAPIPropria.PrepararConsultaNFSeporChave(
+  Response: TNFSeConsultaNFSeResponse);
+var
+  AErro: TNFSeEventoCollectionItem;
+  CnpjPrestador: string;
+begin
+  if EstaVazio(Response.InfConsultaNFSe.ChaveNFSe) then
+  begin
+    AErro := Response.Erros.New;
+    AErro.Codigo := Cod118;
+    AErro.Descricao := ACBrStr(Desc118);
+    Exit;
+  end;
+
+  CnpjPrestador := TACBrNFSeX(FAOwner).Configuracoes.Geral.Emitente.CNPJ;
+  Response.ArquivoEnvio := MontarXmlConsultaNacional(CnpjPrestador,
+    Response.InfConsultaNFSe.ChaveNFSe, '');
+  Response.Metodo := tmConsultarNFSePorChave;
+  Path := '';
+  Method := 'POST';
+end;
+
+procedure TACBrNFSeProviderSilTecnologiaAPIPropria.AssinarConsultaNFSeporChave(
+  Response: TNFSeConsultaNFSeResponse);
+begin
+  if ConfigAssinar.ConsultarNFSePorChave then
+    AssinarXmlConsultaNacional(Response);
+end;
+
+procedure TACBrNFSeProviderSilTecnologiaAPIPropria.TratarRetornoConsultaNFSeporChave(
+  Response: TNFSeConsultaNFSeResponse);
+begin
+  TratarRetornoConsultaNacional(Response);
+end;
 procedure TACBrNFSeProviderSilTecnologiaAPIPropria.PrepararEmitir(
   Response: TNFSeEmiteResponse);
 var
