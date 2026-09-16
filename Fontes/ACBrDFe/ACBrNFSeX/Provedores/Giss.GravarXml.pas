@@ -449,8 +449,9 @@ begin
      (NFSe.Servico.Valores.totTrib.pTotTribMun > 0) then
     Result.AppendChild(GerarXMLPercentualTotalTributos)
   else
-    Result.AppendChild(AddNode(tcDe2, '#1', 'pTotTribSN', 1, 5, 1,
-                                  NFSe.Servico.Valores.totTrib.pTotTribSN, ''));
+    // Quando nao ha destaque de carga tributaria aproximada, o Giss exige o
+    // indicador de ausencia de destaque em vez de pTotTribSN=0.00.
+    Result.AppendChild(AddNode(tcInt, '#1', 'indTotTrib', 0, 1, 1, 0, ''));
 end;
 
 function TNFSeW_Giss204.GerarXMLPercentualTotalTributos: TACBrXmlNode;
