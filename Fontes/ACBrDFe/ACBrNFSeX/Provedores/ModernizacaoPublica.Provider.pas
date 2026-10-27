@@ -121,6 +121,8 @@ type
                                      Response: TNFSeWebserviceResponse;
                                      const AListTag: string = 'ListaMensagemRetorno';
                                      const AMessageTag: string = 'Erro'); override;
+  public
+    function GetSchemaPath: string; override;
   end;
 
 implementation
@@ -758,6 +760,23 @@ begin
                            '</' + Prefixo + 'IdentificacaoRps>' +
                            Prestador +
                          '</' + Prefixo + TagEnvio + '>';
+  end;
+end;
+
+function TACBrNFSeProviderModernizacaoPublicaAPIPropria.GetSchemaPath: string;
+begin
+  {
+    Usar essa função até que o provedor faça alteração e passa a usar os novos
+    Schemas publicados pela Receita Federal.
+  }
+  with TACBrNFSeX(FAOwner).Configuracoes do
+  begin
+    if Geral.APIPropria then
+      Result := PathWithDelim(Arquivos.PathSchemas + 'PadraoNacional')
+    else
+      Result := PathWithDelim(Arquivos.PathSchemas + Geral.xProvedor);
+
+    Result := PathWithDelim(Result + VersaoNFSeToStr(Geral.Versao));
   end;
 end;
 
