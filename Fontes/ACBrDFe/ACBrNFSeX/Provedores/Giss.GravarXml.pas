@@ -402,7 +402,6 @@ end;
 function TNFSeW_Giss204.GerarXMLTributacaoOutrosPisCofins: TACBrXmlNode;
 var
   NOcorr: Integer;
-  ocorrenciaValores: Integer;
 begin
   Result := CreateElement('piscofins');
 
@@ -421,11 +420,6 @@ begin
     if NFSe.Servico.Valores.tribFed.CST in [cst04, cst06, cst99] then
       NOcorr := 1;
 
-    // O Giss distingue PIS/COFINS zerados de campos ausentes no CST 99.
-    ocorrenciaValores := 0;
-    if NFSe.Servico.Valores.tribFed.CST = cst99 then
-      ocorrenciaValores := 1;
-
     Result.AppendChild(AddNode(tcDe2, '#1', 'vBCPisCofins', 1, 15, 0,
                                 NFSe.Servico.Valores.tribFed.vBCPisCofins, ''));
 
@@ -435,10 +429,10 @@ begin
     Result.AppendChild(AddNode(tcDe2, '#1', 'pAliqCofins', 1, 5, NOcorr,
                                  NFSe.Servico.Valores.tribFed.pAliqCofins, ''));
 
-    Result.AppendChild(AddNode(tcDe2, '#1', 'vPis', 1, 15, ocorrenciaValores,
+    Result.AppendChild(AddNode(tcDe2, '#1', 'vPis', 1, 15, 0,
                                         NFSe.Servico.Valores.tribFed.vPis, ''));
 
-    Result.AppendChild(AddNode(tcDe2, '#1', 'vCofins', 1, 15, ocorrenciaValores,
+    Result.AppendChild(AddNode(tcDe2, '#1', 'vCofins', 1, 15, 0,
                                      NFSe.Servico.Valores.tribFed.vCofins, ''));
 
     Result.AppendChild(AddNode(tcStr, '#1', 'tpRetPisCofins', 1, 1, 0,
